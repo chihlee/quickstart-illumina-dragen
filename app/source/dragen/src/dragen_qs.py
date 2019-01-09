@@ -300,8 +300,8 @@ class DragenJob(object):
         return
 
     ########################################################################################
-    # download_ref_tables: Download directory of reference hash tables using the S3
-    #  "directory" prefix self.ref_s3_url should be in format s3://bucket/ref_objects_prefix
+    # download_ref_tables: Download tar file of reference hash tables using the S3
+    #  file prefix with no-sign request. self.ref_s3_url should be in format s3://bucket/ref_objects_prefix
     #
     def download_ref_tables(self):
 
@@ -318,20 +318,31 @@ class DragenJob(object):
             print('Error: could not get S3 bucket and key info from specified URL %s' % self.ref_s3_url)
             sys.exit(1)
 
-        target_path = self.DEFAULT_DATA_FOLDER  # Specifies the root
-        dl_cmd = '{bin} --mode download --bucket {bucket} --key {key} --path {target}'.format(
+        target_path = os.path.join(self.DEFAULT_DATA_FOLDER, s3_key)  # Specifies the root
+        dl_cmd = '{bin} --mode download --bucket "{bucket}" --key "{key}" --path "{target}" --nosign'.format(
             bin=self.D_HAUL_UTIL,
             bucket=s3_bucket,
             key=s3_key,
             target=target_path)
-
         exit_code = exec_cmd(dl_cmd)
-
         if exit_code:
             print('Error: Failure downloading from S3. Exiting with code %d' % exit_code)
             sys.exit(exit_code)
 
-        self.ref_dir = self.DEFAULT_DATA_FOLDER + s3_key
+        referenceFolderName = os.path.splitext(s3_key)[0]
+        self.ref_dir = os.path.join(self.DEFAULT_DATA_FOLDER, referenceFolderName)
+        if not os.path.exists(self.ref_dir):
+            os.mkdir(self.ref_dir)
+        extract_cmd = 'tar xf "{tar}" -C "{folder}"'.format(
+            tar=target_path,
+            folder=self.ref_dir)
+        exit_code = exec_cmd(extract_cmd)
+        if exit_code:
+            print('Error: Failure extracting tar file. Exiting with code %d' % exit_code)
+            sys.exit(exit_code)
+
+        os.remove(target_path)
+
         self.new_args[self.ref_s3_index] = self.ref_dir
         return
 
