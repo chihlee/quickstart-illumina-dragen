@@ -260,11 +260,29 @@ class DragenJob(object):
     ########################################################################################
     # exec_download - Download a file from the given URL to the target directory
     #
-    def exec_url_download(self, url, target_dir):
-        dl_cmd = '{bin} --mode download --url {url} --path {target}'.format(
-            bin=self.D_HAUL_UTIL,
-            url=url,
-            target=target_dir)
+    def exec_url_download(self, url, target_dir, no_sign=False):
+        if url.startswith('s3'):
+            ref_path = url.replace('//', '/')
+            s3_bucket = ref_path.split('/')[1]
+            s3_key = '/'.join(ref_path.split('/')[2:])
+
+            if not s3_key or not s3_bucket:
+                print('Error: could not get S3 bucket and key info from specified URL %s' % self.ref_s3_url)
+                sys.exit(1)
+
+            target_path = os.path.join(target_dir, os.path.split(s3_key)[1])
+            dl_cmd = '{bin} --mode download --bucket "{bucket}" --key "{key}" --path "{target}"'.format(
+                bin=self.D_HAUL_UTIL,
+                bucket=s3_bucket,
+                key=s3_key,
+                target=target_path)
+            if no_sign:
+                dl_cmd += ' --nosign'
+        else:
+            dl_cmd = '{bin} --mode download --url {url} --path {target}'.format(
+                bin=self.D_HAUL_UTIL,
+                url=url,
+                target=target_dir)
 
         exit_code = exec_cmd(dl_cmd)
 
@@ -284,17 +302,17 @@ class DragenJob(object):
 
         if self.fastq_list_url:
             self.exec_url_download(self.fastq_list_url, self.input_dir)
-            filename = self.fastq_list_url.split('/')
+            filename = self.fastq_list_url.split('/')[-1]
             self.new_args[self.fastq_list_index] = self.input_dir + filename
 
         if self.vc_tgt_bed_url:
             self.exec_url_download(self.vc_tgt_bed_url, self.input_dir)
-            filename = self.vc_tgt_bed_url.split('/')
+            filename = self.vc_tgt_bed_url.split('/')[-1]
             self.new_args[self.vc_tgt_bed_index] = self.input_dir + filename
 
         if self.vc_depth_url:
             self.exec_url_download(self.vc_depth_url, self.input_dir)
-            filename = self.vc_depth_url.split('/')
+            filename = self.vc_depth_url.split('/')[-1]
             self.new_args[self.vc_depth_index] = self.input_dir + filename
 
         return
@@ -310,24 +328,11 @@ class DragenJob(object):
             return
 
         # Generate the params to download the HT based on URL s3://bucket/key
-        ref_path = self.ref_s3_url.replace('//', '/')
-        s3_bucket = ref_path.split('/')[1]
-        s3_key = '/'.join(ref_path.split('/')[2:])
+        s3_key = '/'.join(self.ref_s3_url.replace('//', '/').split('/')[2:])
+        target_path = os.path.join(self.DEFAULT_DATA_FOLDER, s3_key)
+        target_dir = os.path.split(target_path)[0]
 
-        if not s3_key or not s3_bucket:
-            print('Error: could not get S3 bucket and key info from specified URL %s' % self.ref_s3_url)
-            sys.exit(1)
-
-        target_path = os.path.join(self.DEFAULT_DATA_FOLDER, s3_key)  # Specifies the root
-        dl_cmd = '{bin} --mode download --bucket "{bucket}" --key "{key}" --path "{target}" --nosign'.format(
-            bin=self.D_HAUL_UTIL,
-            bucket=s3_bucket,
-            key=s3_key,
-            target=target_path)
-        exit_code = exec_cmd(dl_cmd)
-        if exit_code:
-            print('Error: Failure downloading from S3. Exiting with code %d' % exit_code)
-            sys.exit(exit_code)
+        self.exec_url_download(self.ref_s3_url, target_dir, no_sign=True)
 
         referenceFolderName = os.path.splitext(s3_key)[0]
         self.ref_dir = os.path.join(self.DEFAULT_DATA_FOLDER, referenceFolderName)
