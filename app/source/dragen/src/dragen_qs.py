@@ -34,6 +34,7 @@ import time
 import uuid
 import six
 import urllib.parse
+import md5
 
 from argparse import ArgumentParser
 
@@ -264,6 +265,8 @@ class DragenJob(object):
     # exec_download - Download a file from the given URL to the target directory
     #
     def exec_url_download(self, url, target_dir, no_sign=False):
+        if not os.path.exists(target_dir):
+            os.makedirs(target_dir)
         if url.startswith('s3'):
             ref_path = url.replace('//', '/')
             s3_bucket = ref_path.split('/')[1]
@@ -301,7 +304,7 @@ class DragenJob(object):
     def download_inputs(self):
 
         if not self.input_dir:
-            self.input_dir = self.DEFAULT_DATA_FOLDER + 'inputs/'
+            self.input_dir = os.path.join(self.DEFAULT_DATA_FOLDER, 'inputs', str(uuid.uuid4()))
 
         if self.fastq_list_url:
             self.exec_url_download(self.fastq_list_url, self.input_dir)
@@ -331,9 +334,10 @@ class DragenJob(object):
             return
 
         filename = self.ref_s3_url.split('/')[-1]
-        self.ref_dir = os.path.join(self.DEFAULT_DATA_FOLDER, 'reference')
+        referenceFolderName = md5.new(self.ref_s3_url).hexdigest()
+        self.ref_dir = os.path.join(self.DEFAULT_DATA_FOLDER, "reference", referenceFolderName)
         if not os.path.exists(self.ref_dir):
-            os.mkdir(self.ref_dir)
+            os.makedirs(self.ref_dir)
         target_path = os.path.join(self.ref_dir, filename)
         self.exec_url_download(self.ref_s3_url, self.ref_dir, no_sign=True)
 

@@ -232,7 +232,7 @@ class DHaul(object):
             # Assume local path points to absolute file location and source is a single object
             # In this case the download_dir is not use (it is implicit in full path)
             self.download_full_path = local_path
-            self.download_dir = os.path.split(local_path)[0]
+            self.download_dir = None
 
         try:
             if source_url:
