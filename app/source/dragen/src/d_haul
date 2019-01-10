@@ -241,7 +241,8 @@ class DHaul(object):
 
             elif self.download_dir:
                 # Call the full bucket download function
-                tot_size = aws.s3_download_dir(s3_bucket, s3_obj_key, self.download_dir, nosign=self.nosign_flag)
+                tot_size = aws.s3_download_dir(s3_bucket, s3_obj_key, self.download_dir,
+                                               region='us-east-1', nosign=self.nosign_flag)
             else:
                 # Assume we are only downloading one object
                 obj_info = {
