@@ -16,6 +16,8 @@
 #
 
 from __future__ import print_function
+from future import standard_library
+standard_library.install_aliases()
 
 from builtins import filter
 from builtins import str
@@ -31,6 +33,7 @@ import sys
 import time
 import uuid
 import six
+import urllib.parse
 
 from argparse import ArgumentParser
 
@@ -270,7 +273,7 @@ class DragenJob(object):
                 print('Error: could not get S3 bucket and key info from specified URL %s' % self.ref_s3_url)
                 sys.exit(1)
 
-            target_path = os.path.join(target_dir, os.path.split(s3_key)[1])
+            target_path = os.path.join(target_dir, urllib.parse.unquote(os.path.split(s3_key)[1]))
             dl_cmd = '{bin} --mode download --bucket "{bucket}" --key "{key}" --path "{target}"'.format(
                 bin=self.D_HAUL_UTIL,
                 bucket=s3_bucket,
@@ -327,17 +330,14 @@ class DragenJob(object):
             print('Warning: No reference HT directory URL specified!')
             return
 
-        # Generate the params to download the HT based on URL s3://bucket/key
-        s3_key = '/'.join(self.ref_s3_url.replace('//', '/').split('/')[2:])
-        target_path = os.path.join(self.DEFAULT_DATA_FOLDER, s3_key)
-        target_dir = os.path.split(target_path)[0]
-
-        self.exec_url_download(self.ref_s3_url, target_dir, no_sign=True)
-
-        referenceFolderName = os.path.splitext(s3_key)[0]
-        self.ref_dir = os.path.join(self.DEFAULT_DATA_FOLDER, referenceFolderName)
+        filename = self.ref_s3_url.split('/')[-1]
+        self.ref_dir = os.path.join(self.DEFAULT_DATA_FOLDER, 'reference')
         if not os.path.exists(self.ref_dir):
             os.mkdir(self.ref_dir)
+        target_path = os.path.join(self.ref_dir, filename)
+        self.exec_url_download(self.ref_s3_url, self.ref_dir, no_sign=True)
+
+        print('Extracting %s to %s' % (target_path, self.ref_dir))
         extract_cmd = 'tar xf "{tar}" -C "{folder}"'.format(
             tar=target_path,
             folder=self.ref_dir)
@@ -346,6 +346,7 @@ class DragenJob(object):
             print('Error: Failure extracting tar file. Exiting with code %d' % exit_code)
             sys.exit(exit_code)
 
+        print('Deleting %s' % target_path)
         os.remove(target_path)
 
         self.new_args[self.ref_s3_index] = self.ref_dir

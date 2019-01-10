@@ -224,7 +224,7 @@ class DHaul(object):
         self.logger.log('Starting d_haul download ...')
 
         # Figure out if path is dir or object
-        if local_path.endswith('/'):
+        if os.path.isdir(local_path) or local_path.endswith('/'):
             # Assume local path is directory, 'full' path is not used
             self.download_dir = local_path
             self.download_full_path = None
@@ -232,7 +232,7 @@ class DHaul(object):
             # Assume local path points to absolute file location and source is a single object
             # In this case the download_dir is not use (it is implicit in full path)
             self.download_full_path = local_path
-            self.download_dir = None
+            self.download_dir = os.path.split(local_path)[0]
 
         try:
             if source_url:
