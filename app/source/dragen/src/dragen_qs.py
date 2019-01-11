@@ -309,17 +309,17 @@ class DragenJob(object):
         if self.fastq_list_url:
             self.exec_url_download(self.fastq_list_url, self.input_dir)
             filename = self.fastq_list_url.split('/')[-1]
-            self.new_args[self.fastq_list_index] = self.input_dir + filename
+            self.new_args[self.fastq_list_index] = os.path.join(self.input_dir, filename)
 
         if self.vc_tgt_bed_url:
             self.exec_url_download(self.vc_tgt_bed_url, self.input_dir)
             filename = self.vc_tgt_bed_url.split('/')[-1]
-            self.new_args[self.vc_tgt_bed_index] = self.input_dir + filename
+            self.new_args[self.vc_tgt_bed_index] = os.path.join(self.input_dir, filename)
 
         if self.vc_depth_url:
             self.exec_url_download(self.vc_depth_url, self.input_dir)
             filename = self.vc_depth_url.split('/')[-1]
-            self.new_args[self.vc_depth_index] = self.input_dir + filename
+            self.new_args[self.vc_depth_index] = os.path.join(self.input_dir, filename)
 
         return
 
