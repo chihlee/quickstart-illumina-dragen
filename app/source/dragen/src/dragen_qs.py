@@ -350,7 +350,7 @@ class DragenJob(object):
             print('Error: Failure extracting tar file. Exiting with code %d' % exit_code)
             sys.exit(exit_code)
 
-        print('Deleting %s' % target_path)
+        print('Removing %s' % target_path)
         os.remove(target_path)
 
         self.new_args[self.ref_s3_index] = self.ref_dir
@@ -458,10 +458,13 @@ class DragenJob(object):
         self.upload_job_outputs()
 
         # Delete the output results directory, i.e. /staging/<uuid4>
-        # NOTE: Do not delete the reference directory enable re-use with another job
         rm_out_path = self.output_dir
         print("Removing Output dir %s" % rm_out_path)
         shutil.rmtree(rm_out_path, ignore_errors=True)
+
+        # Delete the reference directory
+        print("Removing Reference dir %s" % self.ref_dir)
+        shutil.rmtree(self.ref_dir, ignore_errors=True)
 
         # Handle error code
         if exit_code:
