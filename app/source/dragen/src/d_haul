@@ -31,6 +31,7 @@ from multiprocessing import Pool, TimeoutError
 
 import requests  # TODO: replace this with urlib2
 from urllib.request import urlopen
+import urlparse
 
 import scheduler.aws_utils as aws
 import scheduler.scheduler_utils as utils
@@ -77,20 +78,14 @@ class DHaul(object):
     #   Returns the number of bytes downloaded (i.e. file size)
     #
     def download_from_url(self, url):
-        url_parts = url.split('?')
-
-        # Get the file name from the URL
-        main_url = url_parts[0]
-        self.file_name = main_url.split('/')[-1]
-
         # Since we are operating on a URL string, we should decode it to remove any percent encodings
-        self.file_name = urllib.parse.unquote(self.file_name)
+        self.file_name = urllib.parse.unquote(os.path.basename(urlparse.urlparse(url).path))
 
         # Make sure the path exists for the target directory
         utils.check_create_dir(self.download_dir)
 
         # Configure the full path of the download file
-        self.download_full_path = self.download_dir + '/' + self.file_name
+        self.download_full_path = os.path.join(self.download_dir, self.file_name)
 
         # If multipart download is enabled, use this new method
         if self.multipart_flag:
