@@ -114,15 +114,6 @@ class DragenJob(object):
         self.ref_s3_url = None          # Determine from the -r or --ref-dir option
         self.ref_s3_index = -1
 
-        self.fastq_list_url = None      # Determine from the --fastq-list option
-        self.fastq_list_index = -1
-
-        self.vc_tgt_bed_url = None      # Determine from the --vc-target-bed option
-        self.vc_tgt_bed_index = -1
-
-        self.vc_depth_url = None        # Determine from the ----vc-depth-intervals-bed
-        self.vc_depth_index = -1
-
         # Output info
         self.output_s3_url = None       # Determine from the --output-directory field
         self.output_s3_index = -1
@@ -153,26 +144,6 @@ class DragenJob(object):
         if opt_no >= 0:
             self.output_s3_url = self.orig_args[opt_no + 1]
             self.output_s3_index = opt_no + 1
-
-        # --fastq-list: URL (http or s3) for fastq list CSV file
-        opt_no = find_arg_in_list(self.orig_args, '--fastq-list')
-        if opt_no >= 0:
-            self.fastq_list_url = self.orig_args[opt_no + 1]
-            self.fastq_list_index = opt_no + 1
-
-        # --vc-target-bed: URL for the VC target bed
-        opt_no = find_arg_in_list(self.orig_args, '--vc-target-bed')
-        if opt_no >= 0:
-            self.vc_tgt_bed_url = self.orig_args[opt_no + 1]
-            self.vc_tgt_bed_index = opt_no + 1
-
-        # --vc-depth-intervals-bed: URL for the VC depth intervals
-        opt_no = find_arg_in_list(self.orig_args, '--vc-depth-intervals-bed')
-        if opt_no >= 0:
-            self.vc_depth_url = self.orig_args[opt_no + 1]
-            self.vc_depth_index = opt_no + 1
-
-        return
 
     ########################################################################################
     # set_resource_limits - Set resource limits prior.
@@ -316,24 +287,25 @@ class DragenJob(object):
         return target_path
 
     ########################################################################################
-    # download_inputs: Download specific Dragen inputs needed from provided URLs, and
-    # replace them with a local path, i.e. fastq_list, bed files, etc.
+    # download_inputs: Check self.new_args to download the input file whenever the
+    # argument is a URL, and replace them with a local path.
+    # E.g., --fastq-list, --vc-tgt-bed, --vc-depth-intervals-bed, --vc-pedigree and --variant-list.
     #
     def download_inputs(self):
-
         if not self.input_dir:
             self.input_dir = os.path.join(self.DEFAULT_DATA_FOLDER, 'inputs', str(uuid.uuid4()))
 
-        if self.fastq_list_url:
-            self.new_args[self.fastq_list_index] = self.exec_url_download(self.fastq_list_url, self.input_dir)
-
-        if self.vc_tgt_bed_url:
-            self.new_args[self.vc_tgt_bed_index] = self.exec_url_download(self.vc_tgt_bed_url, self.input_dir)
-
-        if self.vc_depth_url:
-            self.new_args[self.vc_depth_index] = self.exec_url_download(self.vc_depth_url, self.input_dir)
-
-        return
+        for i in xrange(len(self.new_args)):
+            if i > 0 and self.new_args[i - 1] == '--lic-server':
+                continue
+            arg = self.new_args[i]
+            if arg == self.output_s3_url:
+                continue
+            try:
+                if urlparse.urlparse(arg).scheme in ('s3', 'http', 'https', 'ftp'):
+                    self.new_args[i] = self.exec_url_download(arg, self.input_dir)
+            except:
+                pass
 
     ########################################################################################
     # download_ref_tables: Download tar file of reference hash tables using the S3

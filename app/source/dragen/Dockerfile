@@ -39,7 +39,7 @@ RUN yum -y install \
 # Install d_haul and dragen_job_execute wrapper functions and associated packages
 RUN mkdir -p /root/quickstart/scheduler && \
     touch /root/quickstart/scheduler/__init__.py
-COPY src/d_haul src/dragen_qs.py /root/quickstart/
+COPY src/d_haul src/dragen_qs.py src/fetch_and_run_python.py /root/quickstart/
 COPY src/scheduler/aws_utils.py src/scheduler/logger.py src/scheduler/scheduler_utils.py  \
     /root/quickstart/scheduler/
 
