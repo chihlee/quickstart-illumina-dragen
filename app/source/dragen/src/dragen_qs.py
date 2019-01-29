@@ -91,6 +91,7 @@ def parse_s3_url(url):
 # DragenJob - Dragen Job execution object
 #
 class DragenJob(object):
+    ADDITIONAL_INPUT = '--additional-input'
     DRAGEN_PATH = '/opt/edico/bin/dragen'
     D_HAUL_UTIL = 'python /root/quickstart/d_haul'
     DRAGEN_LOG_FILE_NAME = 'dragen_log_%d.txt'
@@ -177,7 +178,7 @@ class DragenJob(object):
                 resource.setrlimit(res, (limit, limit))
             except Exception as e:
                 msg = "Could not set resource ID %s to hard/soft limit %s (error=%s)" \
-                      % (res, limit, e)
+                    % (res, limit, e)
                 print(msg)
         return
 
@@ -295,21 +296,29 @@ class DragenJob(object):
         if not self.input_dir:
             self.input_dir = os.path.join(self.DEFAULT_DATA_FOLDER, 'inputs', str(uuid.uuid4()))
 
+        keep_args = []
         for i in xrange(len(self.new_args)):
+            if i > 0 and self.new_args[i-1] == self.ADDITIONAL_INPUT:
+                keep_args.append(False)
+                keep_args.append(False)
+            else:
+                keep_args.append(True)
+                keep_args.append(True)
+
             if i > 0 and self.new_args[i - 1] == '--lic-server':
                 continue
             arg = self.new_args[i]
             if arg == self.output_s3_url:
                 continue
+
             try:
                 if urlparse.urlparse(arg).scheme in ('s3', 'http', 'https', 'ftp'):
-                    self.new_args[i] = self.exec_url_download(arg, self.input_dir)
-                    
-                    # Check if file is a fasta and download index if it is
-                    if arg.endswith('.fa') or arg.endswith('.fasta'):
-                        self.exec_url_download(arg + '.fai', self.input_dir)                    
+                    self.new_args[i] = self.exec_url_download(arg, self.input_dir)               
             except:
                 pass
+
+        self.new_args = self.new_args[keep_args]    
+
 
     ########################################################################################
     # download_ref_tables: Download tar file of reference hash tables using the S3
