@@ -22,6 +22,7 @@ standard_library.install_aliases()
 from builtins import filter
 from builtins import str
 from builtins import object
+from itertools import compress
 import copy
 import datetime
 import glob
@@ -317,7 +318,7 @@ class DragenJob(object):
             except:
                 pass
 
-        self.new_args = self.new_args[keep_args]    
+        self.new_args = compress(self.new_args, keep_args)   
 
 
     ########################################################################################
