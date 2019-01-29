@@ -304,6 +304,10 @@ class DragenJob(object):
             try:
                 if urlparse.urlparse(arg).scheme in ('s3', 'http', 'https', 'ftp'):
                     self.new_args[i] = self.exec_url_download(arg, self.input_dir)
+                    
+                    # Check if file is a fasta and download index if it is
+                    if arg.endswith('.fa') or arg.endswith('.fasta'):
+                        self.exec_url_download(arg + '.fai', self.input_dir)                    
             except:
                 pass
 
