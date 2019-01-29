@@ -298,11 +298,10 @@ class DragenJob(object):
 
         keep_args = []
         for i in xrange(len(self.new_args)):
-            if i > 0 and self.new_args[i-1] == self.ADDITIONAL_INPUT:
-                keep_args.append(False)
+            if self.new_args[i] == self.ADDITIONAL_INPUT or \
+                    i > 0 and self.new_args[i-1] == self.ADDITIONAL_INPUT:
                 keep_args.append(False)
             else:
-                keep_args.append(True)
                 keep_args.append(True)
 
             if i > 0 and self.new_args[i - 1] == '--lic-server':
