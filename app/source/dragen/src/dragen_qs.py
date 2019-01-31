@@ -91,7 +91,7 @@ def parse_s3_url(url):
 # DragenJob - Dragen Job execution object
 #
 class DragenJob(object):
-    ADDITIONAL_INPUT = '--additional-input'
+    ADDITIONAL_INPUT = '--additional-download'
     DRAGEN_PATH = '/opt/edico/bin/dragen'
     D_HAUL_UTIL = 'python /root/quickstart/d_haul'
     DRAGEN_LOG_FILE_NAME = 'dragen_log_%d.txt'
